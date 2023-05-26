@@ -1,0 +1,29 @@
+/* ProtoCSS Math Functions */
+
+@math mult(a, b) {
+  @return (a * b);
+}
+
+@math add(a, b) {
+  @return (a + b);
+}
+
+@math sub(a, b) {
+  @return (a - b);
+}
+
+@math div(a, b) {
+  @return (a / b);
+}
+
+@math perc(a, b) {
+  @return ((a / b) * 100);
+}
+
+@math mod(a, b) {
+  @return (a % b);
+}
+
+@math pow(a, b) {
+  @return (a ** b);
+}
