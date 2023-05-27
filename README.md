@@ -56,7 +56,6 @@ The ProtoCSS Package Manager supports the following command-line options:
     }
     ```
     if the package doesn't have a `package.json` file, the ProtoCSS Package Manager will create one automatically, after prompting the user for the package name, version, and description.
-  * 
   
     For example, to upload a package named `package_name`, run the following command:
     ```bash
