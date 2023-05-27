@@ -4,7 +4,7 @@ The ProtoCSS Package Manager is a command-line tool written in Python that allow
 
 2. Run the ProtoCSS Package Manager:
 
-```bash
+```
 ptm [-i | -u | -gi | -up] [packages]
 ```
 ## Usage
