@@ -19,34 +19,51 @@ The ProtoCSS Package Manager supports the following command-line options:
 
 ## Examples
 
-1. Install packages:
-```bash
-ptm -i package_name
-```
-This command will install `package_name`.
+* **Install packages:**
+    ```bash
+    ptm -i package_name
+    ```
+    This command will install `package_name`.
 
-2. Upgrade packages:
 
-```bash
-ptm -u package_name
-```
-This command will upgrade `package_name`.
+* **Upgrade packages:**
+    
+    ```bash
+    ptm -u package_name
+    ```
+    This command will upgrade `package_name`.
 
-3. Get package information:
 
-```bash
-ptm -gi package_name
-```
+* **Get package information:**
 
-This command will retrieve information about `package_name`, including the package description, author, version, and files.
+    ```bash
+    ptm -gi package_name
+    ```
+    
+    This command will retrieve information about `package_name`, including the package description, author, version, and contained files.
 
-4. Upload a package:
 
-```bash
-ptm -up package_name
-```
-
-This command will upload the packages from the local `ptm_packages` directory.
+* **Upload a package:**
+  * The ProtoCSS Package Manager will upload packages from the local `ptm_packages` directory. If this directory does not exist, it will be created automatically. 
+  * The ProtoCSS Package Manager will not upload packages that are already uploaded.
+  * A valid package must have a `package.json` file in its root directory. This file must contain the package name, version, and description, following the format below:
+    ```json
+    {
+        "name": "package_name",
+        "version": "x.y.z",
+        "description": "Package description.",
+        "author": "author_name"
+    }
+    ```
+    if the package doesn't have a `package.json` file, the ProtoCSS Package Manager will create one automatically, after prompting the user for the package name, version, and description.
+  * 
+  
+    For example, to upload a package named `package_name`, run the following command:
+    ```bash
+    ptm -up package_name
+    ```
+    
+    This command will upload the package from the local `ptm_packages` directory.
 
 ## License
 
