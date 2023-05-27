@@ -65,21 +65,49 @@ class ProtoCSSPackageManager:
                 package_name = input("Package name: ")
                 package_description = input("Package description: ")
                 package_author = input("Package author: ")
-                package_version = input("Package version: ").replace(".", "_")
+                package_version = input("Package version: ")
                 package_file_name = f"{package_name}-{package_version}.ptm"
                 package_file_path = os.path.join(self.package_dir, package_file_name)
 
-                with open(os.path.join(package_file_path, "package.json"), "w") as file:
+                with open(os.path.join(os.path.abspath(self.package_dir), "package.json"), "w") as file:
                     file.write(f"""{{
         "name": "{package_name}",
         "description": "{package_description}",
         "author": "{package_author}",
         "version": "{package_version}"
     }}""")
-                    blob = storage.bucket().blob(f"packages/{package_file_name}")
-                    blob.upload_from_filename(package_file_path)
-                    print(
-                        f"\n      {Back.LIGHTGREEN_EX}{Fore.LIGHTWHITE_EX}      Package '{package_name}' uploaded successfully!      {Style.RESET_ALL}\n")
+                with open(os.path.join(self.package_dir, "package.json")) as file:
+                    package_info = file.read()
+
+                package_name = package_info.split('"name": "')[1].split('"')[0]
+                package_version = package_info.split('"version": "')[1].split('"')[0].replace(".", "_")
+                package_author = package_info.split('"author": "')[1].split('"')[0]
+                package_file_name = f"{package_name}-{package_version}.ptm"
+                package_file_path = os.path.join(self.package_dir, package_file_name)
+                print("Uploading package...")
+                print(f"\n{Fore.LIGHTWHITE_EX}Name:{Style.RESET_ALL} {package_name}")
+                print(f"{Fore.LIGHTWHITE_EX}Version:{Style.RESET_ALL} {package_version.replace('_', '.')}")
+                print(f"{Fore.LIGHTWHITE_EX}Author:{Style.RESET_ALL} {package_author}\n")
+                # print(f"{Fore.LIGHTWHITE_EX}package_file_name:{Style.RESET_ALL} {package_file_name}\n")
+
+                if os.path.exists(package_file_path):
+                    os.remove(package_file_path)
+                    print(f"{Fore.LIGHTYELLOW_EX}Last version removed.{Style.RESET_ALL}\n")
+
+                print(f"{Fore.LIGHTYELLOW_EX}Creating new version of '{package_name}'...{Style.RESET_ALL}")
+                output_path = os.path.abspath("ptm_package")
+                # print(f"{Fore.LIGHTYELLOW_EX}output_path: {output_path}{Style.RESET_ALL}")
+                shutil.make_archive(f"{package_name}-{package_version}", "zip", output_path)
+                print(f"{Fore.YELLOW}New version created.{Style.RESET_ALL}")
+                # print(os.path.join(self.package_dir, f"{package_name}-{package_version}.zip"))
+                shutil.move(os.path.abspath(f"./{package_name}-{package_version}.zip"), package_file_path)
+                print(f"{Fore.YELLOW}New version moved.{Style.RESET_ALL}")
+                blob = storage.bucket().blob(f"packages/{package_file_name}")
+                print(f"{Fore.LIGHTYELLOW_EX}Uploading new version...{Style.RESET_ALL}")
+                blob.upload_from_filename(package_file_path)
+                print(
+                    f"\n      {Back.LIGHTGREEN_EX}{Fore.LIGHTWHITE_EX}      Package '{package_name}' uploaded successfully!      {Style.RESET_ALL}\n")
+
             else:
                 print(
                     f"\n      {Back.LIGHTBLUE_EX}{Fore.LIGHTWHITE_EX}      package.json found      {Style.RESET_ALL}\n")
@@ -89,16 +117,18 @@ class ProtoCSSPackageManager:
 
                 package_name = package_info.split('"name": "')[1].split('"')[0]
                 package_version = package_info.split('"version": "')[1].split('"')[0].replace(".", "_")
+                package_author = package_info.split('"author": "')[1].split('"')[0]
                 package_file_name = f"{package_name}-{package_version}.ptm"
                 package_file_path = os.path.join(self.package_dir, package_file_name)
                 print("Uploading package...")
-                print(f"\n{Fore.LIGHTWHITE_EX}package_name:{Style.RESET_ALL} {package_name}")
-                print(f"{Fore.LIGHTWHITE_EX}package_version:{Style.RESET_ALL} {package_version}")
-                print(f"{Fore.LIGHTWHITE_EX}package_file_name:{Style.RESET_ALL} {package_file_name}\n")
+                print(f"\n{Fore.LIGHTWHITE_EX}Name:{Style.RESET_ALL} {package_name}")
+                print(f"{Fore.LIGHTWHITE_EX}Version:{Style.RESET_ALL} {package_version.replace('_', '.')}")
+                print(f"{Fore.LIGHTWHITE_EX}Author:{Style.RESET_ALL} {package_author}\n")
+                # print(f"{Fore.LIGHTWHITE_EX}package_file_name:{Style.RESET_ALL} {package_file_name}\n")
 
                 if os.path.exists(package_file_path):
                     os.remove(package_file_path)
-                    print(f"{Fore.YELLOW}Last version removed.{Style.RESET_ALL}")
+                    print(f"{Fore.LIGHTYELLOW_EX}Last version removed.{Style.RESET_ALL}\n")
 
                 print(f"{Fore.LIGHTYELLOW_EX}Creating new version of '{package_name}'...{Style.RESET_ALL}")
                 output_path = os.path.abspath("ptm_package")

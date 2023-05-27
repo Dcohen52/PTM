@@ -5,11 +5,8 @@ The ProtoCSS Package Manager is a command-line tool written in Python that allow
 2. Run the ProtoCSS Package Manager:
 
 ```bash
-ptm [options] [package_name]
+ptm [-i | -u | -gi | -up] [packages]
 ```
-markdown
-Copy code
-
 ## Usage
 
 The ProtoCSS Package Manager supports the following command-line options:
@@ -18,7 +15,7 @@ The ProtoCSS Package Manager supports the following command-line options:
 - `-i`, `--install`: Install packages.
 - `-u`, `--upgrade`: Upgrade packages.
 - `-gi`, `--get-info`: Get package information.
-- `-up`, `--upload`: Upload a package to Firebase storage.
+- `-up`, `--upload`: Upload packages.
 
 ## Examples
 
