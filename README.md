@@ -41,7 +41,14 @@ The ProtoCSS Package Manager supports the following command-line options:
     ```
     
     This command will retrieve information about `package_name`, including the package description, author, version, and contained files.
+    
+* **Get cloud package information:**
 
+```bash
+ptm -gic package_name
+```
+    
+Same as above - but directly from the web. the difference is that it doesn't require the package to be installed on the machine.
 
 * **Upload a package:**
   * The ProtoCSS Package Manager will upload packages from the local `ptm_packages` directory. If this directory does not exist, it will be created automatically. 
