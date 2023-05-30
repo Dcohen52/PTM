@@ -1,6 +1,6 @@
 # ProtoCSS Package Manager
 
-The ProtoCSS Package Manager is a command-line tool written in Python that allows you to manage and install packages for the ProtoCSS preprocessor. It provides functionality for installing, upgrading, retrieving package information, and uploading packages.
+The ProtoCSS Package Manager is a command-line tool that allows you to manage and install packages for ProtoCSS. It provides functionality for installing, upgrading, retrieving package information, and uploading packages.
 
 2. Run the ProtoCSS Package Manager:
 
