@@ -2,7 +2,7 @@
 # ProtoCSS Package Manager #
 ############################
 import json
-
+from tqdm import tqdm
 import requests
 import os
 import shutil
@@ -10,6 +10,7 @@ import argparse
 from colorama import Back, Fore, Style
 import firebase_admin
 from firebase_admin import credentials, storage
+import datetime
 
 with open(".env") as file:
     for line in file:
@@ -29,31 +30,115 @@ class ProtoCSSPackageManager:
     def __init__(self, server_url):
         self.server_url = server_url
         self.package_dir = "ptm_package"
+        self.installed_packages_dir = "modules"
 
     def initialize(self):
         if not os.path.exists(self.package_dir):
             os.makedirs(self.package_dir)
 
+    # def install_package(self, *packages, **kwargs):
+    #     try:
+    #         for package in packages:
+    #             # look for package in server
+    #             package_name = package
+    #             package_version = self.get_package_info(package_name)["version"]
+    #             print(f"{Fore.LIGHTYELLOW_EX}Installing package '{package_name}'...{Style.RESET_ALL}")
+    #             package = f"{package_name}-{package_version.replace('.', '_')}.ptm"
+    #             print(f"{Fore.YELLOW}Package found.{Style.RESET_ALL}")
+    #             print(f"{Fore.LIGHTYELLOW_EX}Downloading package '{package}'...{Style.RESET_ALL}")
+    #
+    #             if not os.path.exists(self.installed_packages_dir):
+    #                 os.mkdir(self.installed_packages_dir)
+    #             if not os.path.exists(os.path.join(self.installed_packages_dir, package_name)):
+    #                 os.mkdir(os.path.join(self.installed_packages_dir, package_name))
+    #
+    #             blob = storage.bucket().blob(
+    #                 f"packages/{package_name}/{package_version.replace('.', '_')}/{package}")
+    #             blob.download_to_filename(os.path.join(f"{self.installed_packages_dir}/{package_name}/", package))
+    #
+    #             print(f"{Fore.YELLOW}Package downloaded.{Style.RESET_ALL}")
+    #
+    #             shutil.move(os.path.join(f"{self.installed_packages_dir}/{package_name}/", package),
+    #                         os.path.join(f"{self.installed_packages_dir}/{package_name}/",
+    #                                      f"{package_name}-{package_version.replace('.', '_')}.zip"))
+    #
+    #             print(f"{Fore.LIGHTYELLOW_EX}Unzipping package '{package}'...{Style.RESET_ALL}")
+    #             package_zip = f"{package_name}-{package_version.replace('.', '_')}.zip"
+    #             shutil.unpack_archive(os.path.join(f"{self.installed_packages_dir}/{package_name}", package_zip),
+    #                                   self.installed_packages_dir + f"/{package_name}")
+    #
+    #             print(f"{Fore.YELLOW}Package unzipped.{Style.RESET_ALL}")
+    #
+    #             os.remove(os.path.join(self.installed_packages_dir + f"/{package_name}", package_zip))
+    #             os.remove(os.path.join(self.installed_packages_dir + f"/{package_name}", f"{package_name}-{package_version.replace('.', '_')}_.ptm"))
+    #             print(f"{Fore.YELLOW}Leftover files removed.{Style.RESET_ALL}")
+    #
+    #             print(
+    #                 f"\n      {Back.LIGHTGREEN_EX}{Fore.LIGHTWHITE_EX}      Package '{package_name}' installed successfully!      {Style.RESET_ALL}\n")
+    #     except Exception as e:
+    #         print(
+    #             f"\n      {Back.LIGHTRED_EX}{Fore.LIGHTWHITE_EX}      Error installing package '{package_name}'!      {Style.RESET_ALL}\n")
+    #         print(e)
+
     def install_package(self, *packages, **kwargs):
         try:
             for package in packages:
+                # look for package in server
                 package_name = package
-                package_version = kwargs.get("version", "latest")
-                package_file_name = f"{package_name}-{package_version}.ptm"
-                package_file_path = os.path.join(self.package_dir, package_file_name)
-                if not os.path.exists(package_file_path):
-                    print(f"Downloading {package_name}...")
-                    r = requests.get(f"{self.server_url}/package/{package_name}/{package_version}")
-                    with open(package_file_path, "wb") as file:
-                        file.write(r.content)
-                    print(f"Installing {package_name}...")
-                    shutil.unpack_archive(package_file_path, package_name)
-                    os.remove(package_file_path)
-                    print(f"{package_name} installed successfully.")
-                else:
-                    print(f"{package_name} is already installed.")
+                package_version = self.get_package_info(package_name)["version"]
+                print(f"{Fore.LIGHTYELLOW_EX}Installing package '{package_name}'...{Style.RESET_ALL}")
+                package = f"{package_name}-{package_version.replace('.', '_')}.ptm"
+                print(f"{Fore.YELLOW}Package found.{Style.RESET_ALL}")
+                print(f"{Fore.LIGHTYELLOW_EX}Downloading package '{package}'...{Style.RESET_ALL}")
+
+                if not os.path.exists(self.installed_packages_dir):
+                    os.mkdir(self.installed_packages_dir)
+                if not os.path.exists(os.path.join(self.installed_packages_dir, package_name)):
+                    os.mkdir(os.path.join(self.installed_packages_dir, package_name))
+
+                blob = storage.bucket().blob(
+                    f"packages/{package_name}/{package_version.replace('.', '_')}/{package}")
+
+                # Create URL for the blob
+                url = blob.generate_signed_url(datetime.timedelta(minutes=5))
+
+                # Stream the download while updating the progress bar
+                response = requests.get(url, stream=True)
+                total_size_in_bytes = int(response.headers.get('content-length', 0))
+                progress_bar = tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
+
+                with open(os.path.join(f"{self.installed_packages_dir}/{package_name}/", package), 'wb') as file:
+                    for chunk in response.iter_content(chunk_size=1024):
+                        progress_bar.update(len(chunk))
+                        file.write(chunk)
+                progress_bar.close()
+                if total_size_in_bytes != 0 and progress_bar.n != total_size_in_bytes:
+                    print("ERROR, something went wrong")
+
+                print(f"{Fore.YELLOW}Package downloaded.{Style.RESET_ALL}")
+
+                shutil.move(os.path.join(f"{self.installed_packages_dir}/{package_name}/", package),
+                            os.path.join(f"{self.installed_packages_dir}/{package_name}/",
+                                         f"{package_name}-{package_version.replace('.', '_')}.zip"))
+
+                print(f"{Fore.LIGHTYELLOW_EX}Unzipping package '{package}'...{Style.RESET_ALL}")
+                package_zip = f"{package_name}-{package_version.replace('.', '_')}.zip"
+                shutil.unpack_archive(os.path.join(f"{self.installed_packages_dir}/{package_name}", package_zip),
+                                      self.installed_packages_dir + f"/{package_name}")
+
+                print(f"{Fore.YELLOW}Package unzipped.{Style.RESET_ALL}")
+
+                os.remove(os.path.join(self.installed_packages_dir + f"/{package_name}", package_zip))
+                os.remove(os.path.join(self.installed_packages_dir + f"/{package_name}",
+                                       f"{package_name}-{package_version.replace('.', '_')}_.ptm"))
+                print(f"{Fore.YELLOW}Leftover files removed.{Style.RESET_ALL}")
+
+                print(
+                    f"\n      {Back.LIGHTGREEN_EX}{Fore.LIGHTWHITE_EX}      Package '{package_name}' installed successfully!      {Style.RESET_ALL}\n")
         except Exception as e:
-            print(f"{Fore.RED}Error: Package '{package_name}' not found.{Style.RESET_ALL}")
+            print(
+                f"\n      {Back.LIGHTRED_EX}{Fore.LIGHTWHITE_EX}      Error installing package '{package_name}'!      {Style.RESET_ALL}\n")
+            print(e)
 
     def upload_package(self):
         try:
@@ -157,7 +242,7 @@ class ProtoCSSPackageManager:
         return self._fetch_package_info(package_name)
 
     def _fetch_package_info(self, package_name):
-        print(f"Fetching package '{package_name}'...")
+        print(f"Fetching package '{package_name}'...\n")
         try:
             # Authenticate the user with appropriate credentials
             # cred = credentials.Certificate(__cert_path__)
@@ -165,7 +250,7 @@ class ProtoCSSPackageManager:
 
             # Access the package.json file from Firebase Storage
             bucket = storage.bucket()
-            blob = bucket.blob(f"packages/{package_name}/1_0_0_/package.json")
+            blob = bucket.blob(f"packages/{package_name}/1_0_0/package.json")
             package_info = blob.download_as_text()
             package_info = json.loads(package_info)
 
@@ -189,7 +274,8 @@ def main():
     parser.add_argument("packages", nargs="*", help="Package names")
     parser.add_argument("-i", "--install", action="store_true", help="Install packages")
     parser.add_argument("-u", "--upgrade", action="store_true", help="Upgrade packages")
-    parser.add_argument("-gi", "--get-info", action="store_true", help="Get package information")
+    parser.add_argument("-ifw", "--info-from-web", action="store_true", help="Get package information from the cloud")
+    parser.add_argument("-gi", "--get-info", action="store_true", help="Get installed package information")
     parser.add_argument("-up", "--upload", action="store_true", help="Upload a package")
 
     args = parser.parse_args()
@@ -203,6 +289,8 @@ def main():
     elif args.upgrade:
         ptm.upgrade_package(*args.packages)
     elif args.get_info:
+        pass
+    elif args.info_from_web:
         for package_name in args.packages:
             package_info = ptm.get_package_info(package_name)
             if package_info is not None:
@@ -225,12 +313,16 @@ if __name__ == "__main__":
     main()
 
 # TODO:
-#  - Add support for installing packages
-#  - Add support for upgrading packages
+#  - CORE:
+#  - Add support for installing packages - CHECKED
 #  - Add support for getting package information - CHECKED
 #  - Add support for uploading packages: - CHECKED
 #       - Upload with existing package.json - CHECKED
 #       - Upload without existing package.json - CHECKED
+#  - Add support for upgrading packages.
+#  - Add support for getting installed package information.
+#  -
+#  - WEB:
 #  - Add login mechanism:
 #       - Ability to get the user's packages within the website.
 #       - Ability to upload packages to the user's account (the only way to upload packages).
