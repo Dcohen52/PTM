@@ -258,6 +258,17 @@ class ProtoCSSPackageManager:
         except Exception as e:
             print(f"{Fore.RED}Error: {e}{Style.RESET_ALL}")
 
+    def get_installed_packages(self):
+        return os.listdir(self.package_dir)
+
+    def get_installed_package_info(self, package_name):
+        if package_name in self.get_installed_packages():
+            with open(os.path.join(self.package_dir, package_name, "package.json")) as file:
+                package_info = file.read()
+            return json.loads(package_info)
+        else:
+            return None
+
     def _download_file(self, url, file_path):
         try:
             response = requests.get(url, stream=True)
@@ -274,7 +285,7 @@ def main():
     parser.add_argument("packages", nargs="*", help="Package names")
     parser.add_argument("-i", "--install", action="store_true", help="Install packages")
     parser.add_argument("-u", "--upgrade", action="store_true", help="Upgrade packages")
-    parser.add_argument("-ifw", "--info-from-web", action="store_true", help="Get package information from the cloud")
+    parser.add_argument("-gic", "--get-info-web", action="store_true", help="Get package information from the cloud")
     parser.add_argument("-gi", "--get-info", action="store_true", help="Get installed package information")
     parser.add_argument("-up", "--upload", action="store_true", help="Upload a package")
 
@@ -289,16 +300,29 @@ def main():
     elif args.upgrade:
         ptm.upgrade_package(*args.packages)
     elif args.get_info:
-        pass
-    elif args.info_from_web:
+        try:
+            for package_name in args.packages:
+                for file in os.listdir(os.path.join(os.path.abspath("modules"), package_name)):
+                    if file == "package.json":
+                        with open(os.path.join(os.path.join(os.path.abspath("modules")), package_name,
+                                               file)) as package_file:
+                            package_info = json.load(package_file)
+                            print(f"\n{Fore.LIGHTWHITE_EX}Package name:{Style.RESET_ALL} {package_name}")
+                            print(
+                                f"{Fore.LIGHTWHITE_EX}Version:{Style.RESET_ALL} {package_info['version'].replace('_', '.')}")
+                            print(f"{Fore.LIGHTWHITE_EX}Author:{Style.RESET_ALL} {package_info['author']}")
+                            print(f"{Fore.LIGHTWHITE_EX}Description:{Style.RESET_ALL} {package_info['description']}\n")
+                        break
+        except Exception as e:
+            print(f"{Fore.RED}Error: module '{package_name}' does not exist in the modules directory.{Style.RESET_ALL}")
+    elif args.get_info_web:
         for package_name in args.packages:
             package_info = ptm.get_package_info(package_name)
             if package_info is not None:
                 print(f"{Fore.LIGHTWHITE_EX}Package name:{Style.RESET_ALL} {package_name}")
                 print(f"{Fore.LIGHTWHITE_EX}Version:{Style.RESET_ALL} {package_info['version'].replace('_', '.')}")
                 print(f"{Fore.LIGHTWHITE_EX}Author:{Style.RESET_ALL} {package_info['author']}")
-                print(f"{Fore.LIGHTWHITE_EX}Description:{Style.RESET_ALL} {package_info['description']}")
-                print()
+                print(f"{Fore.LIGHTWHITE_EX}Description:{Style.RESET_ALL} {package_info['description']}\n")
             else:
                 print(f"Package '{package_name}' not found.")
     elif args.upload:
@@ -320,7 +344,7 @@ if __name__ == "__main__":
 #       - Upload with existing package.json - CHECKED
 #       - Upload without existing package.json - CHECKED
 #  - Add support for upgrading packages.
-#  - Add support for getting installed package information.
+#  - Add support for getting installed package information. - CHECKED
 #  -
 #  - WEB:
 #  - Add login mechanism:
